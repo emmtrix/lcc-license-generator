@@ -49,10 +49,10 @@ typedef struct _PKEY_BLOB {
 static const string formatError(DWORD status) {
 	std::ostringstream ss;
 	ss << std::hex << status;
-	vector<char> msgBuffer(256);
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &msgBuffer[0],
+	vector<wchar_t> msgBuffer(256);
+	FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, status, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &msgBuffer[0],
 				  sizeof(msgBuffer) - 1, nullptr);
-	return string(&msgBuffer[0]) + ss.str();
+	return string(msgBuffer.begin(), msgBuffer.end()) + ss.str();
 }
 
 static BCRYPT_ALG_HANDLE openSignatureProvider() {
@@ -325,6 +325,7 @@ RSAPublicKey ::= SEQUENCE {
 		DWORD status, cbSignature;
 		bool success = false;
 		PBYTE pbSignature = nullptr;
+		wstring wsignatureBuffer;
 
 		BCRYPT_PKCS1_PADDING_INFO paddingInfo;
 		ZeroMemory(&paddingInfo, sizeof(paddingInfo));
@@ -337,17 +338,19 @@ RSAPublicKey ::= SEQUENCE {
 				if (NT_SUCCESS(status = BCryptSignHash(m_hTmpKey, &paddingInfo, pbHash, hashDataLenght, pbSignature,
 													   cbSignature, &cbSignature, BCRYPT_PAD_PKCS1))) {
 					DWORD finalSize;
-					if (CryptBinaryToString(pbSignature, cbSignature, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
+					if (CryptBinaryToStringW(pbSignature, cbSignature, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
 											nullptr, &finalSize)) {
-						signatureBuffer.resize(
+						wsignatureBuffer.resize(
 							finalSize -
 							1);  // finalSize counts the \0 in the end, while string counts only the characters
 						success =
-							CryptBinaryToString(pbSignature, cbSignature, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
-												const_cast<char*>(signatureBuffer.data()), &finalSize);
+							CryptBinaryToStringW(pbSignature, cbSignature, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
+												const_cast<wchar_t*>(wsignatureBuffer.data()), &finalSize);
 						if (!success) {
 							status = GetLastError();
 							error = "problem exporting data " + formatError(status);
+						} else {
+							signatureBuffer.assign(wsignatureBuffer.begin(), wsignatureBuffer.end());
 						}
 					} else {
 						status = GetLastError();

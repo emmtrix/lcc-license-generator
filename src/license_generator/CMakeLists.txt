@@ -36,5 +36,4 @@ if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 	export(PACKAGE lccgen)
 endif()
 
-
-
+target_compile_options(license_generator_lib PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/EHsc>)

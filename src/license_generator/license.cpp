@@ -52,7 +52,7 @@ static const string normalize_date(const std::string &sDate) {
 static const string normalize_project_path(const string &project_path) {
 	const fs::path rproject_path(project_path);
 	if (!fs::exists(rproject_path) || !fs::is_directory(rproject_path)) {
-		throw logic_error("Path " + project_path + " doesn't exist or is not a directory.");
+		throw logic_error("Path " + project_path + " doesn't exist or is not a directory");
 	}
 	fs::path normalized;
 	const string rproject_path_str = rproject_path.string();
@@ -75,8 +75,8 @@ static void create_license_path(const string &license_file_name) {
 				throw runtime_error("Cannot create licenses directory [" + parentPath.string() + "]");
 			}
 		} else if (fs::is_regular_file(parentPath)) {
-			throw runtime_error("trying to create folder [" + parentPath.string() +
-								"] but there is a file with the same name. ");
+			throw runtime_error("Trying to create folder [" + parentPath.string() +
+								"] but there is a file with the same name");
 		}
 	}
 }
